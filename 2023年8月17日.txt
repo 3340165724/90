@@ -1,0 +1,6 @@
+山白露：
+阶段二问题：
+1、spark-shell输入多行的命令 :paste 忘了
+2、使用 spark sql 创建分区表出错，原因是：
+	1）、partitioned by(分区列 数据类型) 语句中单词partitioned写错，写成partition
+	2）、fields terminated by ',' 语句中单词terminated 写错，写为 termina**r**ted 中间多了一个 r
