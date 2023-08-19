@@ -1,7 +1,10 @@
 2023年8月19日
 问题：
 1、2022年国赛指标计算第二题没做出来
-根据dws层表customer_consumption_day_aggr表，再联合dwd.dim_region,dwd.dim_nation统计每人每个月下单的数量和下单的总金额，并按照cust_key，totalconsumption，totalorder，month进行分组逆序排序（以cust_key为分组条件），将计算结果存入MySQL数据库shtd_store的nationeverymonth表（表结构如下）中，然后在Linux的MySQL命令行中根据订单总数、消费总额、国家表主键三列均逆序排序的方式，查询出前5条，将SQL语句与执行结果截图粘贴至对应报告中;
+根据dws层表customer_consumption_day_aggr表，再联合dwd.dim_region,dwd.dim_nation统计每人每个月下单的数量和下单的总金额，
+并按照cust_key，totalconsumption，totalorder，month进行分组逆序排序（以cust_key为分组条件），
+将计算结果存入MySQL数据库shtd_store的nationeverymonth表（表结构如下）中，
+然后在Linux的MySQL命令行中根据订单总数、消费总额、国家表主键三列均逆序排序的方式，查询出前5条，将SQL语句与执行结果截图粘贴至对应报告中;
 字段	类型	中文含义	备注
 cust_key	int	客户key	
 cust_name	string	客户名称	
