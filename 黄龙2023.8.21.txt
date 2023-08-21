@@ -1,0 +1,112 @@
+异步请求 配置文件
+	文件名 vue.config.js 内容如下
+
+		module.export ={
+		       lintOnSave：false，
+		       devSrever：{
+		       	proxy:{
+			    '/api':{
+			          target:'http://172.0.0.1:5000',  // 请求地址
+			          changeOrigin：ture，
+			          pathRewrite：{
+			      	'^/api':''
+			          }
+			     }
+			}
+		        }
+		}
+
+
+数据请求 
+  get请求没有参数
+  
+  get请求写法
+	在onMounted 里面调用
+	import {onMounted} from "@vue/rutiem-core"
+	import axios from“axios” 导入axios	
+
+	onMounted(()=>{
+		axios.get('/api/getBrowserByDate1').then((res)=>{   //getBrowserByDate1 接口名
+			let list = res.data.results    //results 名字   根据postman的名字来写 
+			console.log(list)	//打印到控制台
+		}) 
+	})
+
+
+ post请求写法
+
+	在onMounted 里面调用
+	import {onMounted} from "@vue/rutiem-core"
+	import axios from“axios” 导入axios
+	
+
+	需要定义参数
+	//服务端接收普通表单参数时使用
+	 let ps = new URLSearchParams()
+      	      ps.append('start','2021-01-01')
+     	     ps.append('end','2021-12-31')
+
+	//如果服务端接收的是json格式数据
+     	  let ps2 ={
+     	      'start':'2021-01-01',
+     	      'end':'2021-12-31'
+      	  }
+	onMounted(()=>{
+		axios.get('/api/getBrowserByDate1').then((res)=>{   //getBrowserByDate1 接口名
+			let list = res.data.results    //results 名字   根据postman的名字来写 
+			console.log(list)	//打印到控制台
+		}) 
+	})
+
+
+排序方法
+	//冒泡排序
+	for(let i = 0; i<prices.length-1;i++ ){
+                    for(let j = 0; j<prices.length-1-i; j++){
+           		 if(prices[j]<prices[j+1]){
+              			let temp = prices[j]
+              			prices[j] = prices[j+1]
+             			prices[j+1] = temp
+
+              			let temp1 = countrys[j]
+              			countrys[j] = countrys[j+1]
+              			countrys[j+1] = temp1
+            		}
+          	        }
+               }
+
+
+
+//数据从租
+        let finaAll=[]
+        for(let i=0;i<regionkeys.length;i++){
+          let dict={}
+          dict['value']=prices[i]
+          dict['name']=regionkeys[i]
+          finaAll.push(dict)
+        }
+
+	let month = time.slice(5,7)//字符串截取 第一位是开始位 第二位是结束位
+
+错误点
+	排序出现问题 
+	拼写错误 j写成了i
+	
+
+
+echarts
+	//悬浮显示数据
+	tooltip:{
+                  show:true,
+                },
+	//图标标题
+	title:{
+                   text:'某年上半年',
+                   subtext:'各个月份',
+                   left:'center'
+               },
+	//图例  需要在series加上name
+	legend:{
+                   orient:'vertical',
+                   left:'left'
+                },
