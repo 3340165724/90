@@ -1,0 +1,7 @@
+问题：
+1、做出sql不知道对错
+2、hdfs页面的hive数据不在了，原因是权限不够（Permission denied: user=dr.who, access=READ_EXECUTE, inode="/tmp":root:supergroup:drwx-wx-wx）
+解决（hdfs dfs -chmod -R 777 /）
+3、不知道什么原因hadoop的web页面权限没了
+4、做了3个sql
+5、全量抽取数据到动态分区
