@@ -1,0 +1,24 @@
+总结
+ ecahrts图表 柱状图已背
+
+vue 跨域 端口号出现问题
+已解决
+	在python另用一个端口号   起服务端代码 跨越也更改端口号
+
+冒泡排序已经掌握
+
+for(let i = 0; i<states.length-1; i++){
+          for(let j = 0; j<states.length-1-i; j++){
+            if(times[j]<times[j+1]){
+              
+              let temp = times[j]
+              times[j] = times[j+1]
+              times[j+1] = temp
+
+              let temp1 = states[j]
+              states[j] = states[j+1]
+              states[j+1] = temp1
+            }
+          }
+        }
+
