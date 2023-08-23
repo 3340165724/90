@@ -1,0 +1,74 @@
+
+阶段234开发环境搭建：
+1、windiow电脑上安装一个nodepad++软件方便后期打开文本文件
+2、在window电脑上安装scala2.12.0
+3、下载群中的apache-maven-3.5.4，解压到如E盘根目录下（不要解压到中文，特殊符号的目录下）
+     如果不在E盘根目录下，则需要修改解压后maven中conf下的settings.xml文件，修改下面的位置：
+     <localRepository>E:\apache-maven-3.5.4\repo</localRepository>
+     将其中间的E。。。内容改为自己解压后的路径
+4、安装Idea专业版（自己进行破解）
+     如果你安装群中的2018.3.2版本，步骤如下：
+      1）安装idea-2018.3.2.exe
+      2）将破解目录下的 .jar文件拷贝到安装后的idea的bin目录下
+      3）修改bin目录下 idea.exe.vmoptions和idea64.exe.vmoptions文件，在最后加入：
+           -javaagent:D:\Program Files\JetBrains\IntelliJ IDEA 2018.3.2\bin\JetbrainsCrack-release-enc.jar
+           【注意，上面的D盘目录是你自己安装的idea的目录，不要跟我一样了】
+      4）打开idea的时候，提示激活，选择输入激活码，输入安装压缩包中的word文档里面提供的秘钥。
+ThisCrackLicenseId-{
+“licenseId”:”11011”,
+“licenseeName”:”Wechat”,
+“assigneeName”:”tree-deep-see-deer”,
+“assigneeEmail”:”2378437815@qq.com”,
+“licenseRestriction”:””,
+“checkConcurrentUse”:false,
+“products”:[
+{“code”:”II”,”paidUpTo”:”2099-12-31”},
+{“code”:”DM”,”paidUpTo”:”2099-12-31”},
+{“code”:”AC”,”paidUpTo”:”2099-12-31”},
+{“code”:”RS0”,”paidUpTo”:”2099-12-31”},
+{“code”:”WS”,”paidUpTo”:”2099-12-31”},
+{“code”:”DPN”,”paidUpTo”:”2099-12-31”},
+{“code”:”RC”,”paidUpTo”:”2099-12-31”},
+{“code”:”PS”,”paidUpTo”:”2099-12-31”},
+{“code”:”DC”,”paidUpTo”:”2099-12-31”},
+{“code”:”RM”,”paidUpTo”:”2099-12-31”},
+{“code”:”CL”,”paidUpTo”:”2099-12-31”},
+{“code”:”PC”,”paidUpTo”:”2099-12-31”}
+],
+“hash”:”2911276/0”,
+“gracePeriodDays”:7,
+“autoProlongated”:false}
+
+5、在idea中安装scala插件
+      1）打开idea点击File菜单---Settings
+      2）左侧找到Plugins（插件）
+      3）在Marketplace中输入scala，找到scala插件点击install安装
+      4）安装完毕重启idea即可
+
+6、新建项目，左侧选择Maven，Next下一步，输入group id（com.名字简称），artifactid就是项目唯一id名输入、
+     1）进入项目之后点击右侧Maven菜单，点击“扳手”设置，选择自己解压的maven
+          下面User settings file指向你自己的\settings.xml文件（注意后面勾选override选项）
+
+7、创建一个空scala代码文件测试：
+      1）在项目的java下新建包：com.名字简称
+      2）在包下右键新建---》File，输入名称：test.scala  后缀名叫scala确定
+      3）此时会提示你配置本地Scala编译环境SDK，点击setup scala SDK选项即可。
+      4）新建scala object文件，输入main按Tab自动补全main方法，输入 println("")能够正常运行结果即可
+
+
+
+
+
+     
+
+
+
+
+
+
+      
+
+
+
+
+

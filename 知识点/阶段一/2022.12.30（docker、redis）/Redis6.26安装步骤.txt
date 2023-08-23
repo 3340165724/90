@@ -1,0 +1,29 @@
+Redis是一个key-value格式的数据库系统，存入的每个数据都要有个key。
+主要用于缓存数据等。
+
+
+
+Redis6安装步骤：
+
+1、解压redis6安装包到 /usr/local/src下
+2、进入目录改名为redis，然后进入到redis/src目录下
+3、yum -y install gcc automake autoconf libtool make
+4、make PREFIX=/usr/redis install
+     如果报错执行：make MALLOC=libc
+     然后再次执行：make prefix=/usr/redis install
+5、安装后启动命令在：/usr/redis/bin/redis-server
+
+
+
+redis关闭安装模式：
+1）客户端命令行临时关闭
+ config set protected-mode "no"  
+2）修改配置文件（/usr/local/src/redis/conf/redis.conf）
+bind 0.0.0.0
+#daemonize no
+protected-mode no 
+启动时候命令：
+/usr/redis/bin/redis-server  /usr/local/src/redis/redis.conf
+
+
+

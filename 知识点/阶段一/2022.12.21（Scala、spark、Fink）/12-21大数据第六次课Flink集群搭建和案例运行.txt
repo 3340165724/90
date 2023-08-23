@@ -1,0 +1,46 @@
+
+1、Flink集群安装配置：
+     1）解压flink到指定目录，改名、环境变量
+     2）进入flink下conf目录，修改flink.yaml配置
+          jobmanager.rpc.address： 改为主节点主机名（注意：冒号后面要有空格）
+ 
+         classloader.check-leaked-classloader: false
+
+     3）修改workers，将几个机器的节点名都写入
+2、启动flink：
+     start-cluster.sh
+     停止flink： stop-cluster.sh
+
+     启动之后主节点进程：
+     StandaloneSessionClusterEntrypoint
+     TaskManagerRunner
+     从节点进程：
+     TaskManagerRunner
+
+3、打开web页面检测
+       http://192.168.44.81:8081
+     
+4、自带案例的测试（flink/examples下）
+     1、批处理案例（batch）
+     2、流处理案例（streaming）
+
+     运行方式：
+     1、flink on yarn（flink集群无需启动，但是要启动hadoop）
+          flink run -m yarn-cluster  /usr/local/src/flink/examples/batch/WordCount.jar
+     2、flink集群运行（flink集群需启动，hadoop不用启动）      
+          flink run /usr/local/src/flink/examples/batch/WordCount.jar
+
+5、测试流失单词计数案例（SocketWindowWordCount.jar）
+      1）在bigdata1机器上输入：nc -l -p 12000
+           【注意，如果nc不识别则安装：yum -y install nc】
+      2）在bigdata1机器上执行命令：
+      flink run /usr/local/src/flink/examples/streaming/SocketWindowWordCount.jar --hostname bigdata1 --port 12000
+
+      3）在网页上看结果
+
+
+
+
+
+
+

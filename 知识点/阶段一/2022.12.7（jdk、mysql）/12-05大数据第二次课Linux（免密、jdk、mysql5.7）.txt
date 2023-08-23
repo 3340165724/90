@@ -1,0 +1,135 @@
+
+1、先保证三台虚拟机的IP都修改正确，然后安装Xshell、Xftp工具
+     使用Xshell去链接三台虚拟机
+
+2、修改三台虚拟机的主机名：
+     vi /etc/hostname
+
+     hostnamectl set-hostname 主机名
+ 
+     【输入hostname可以查看当前机器的主机名】
+
+3、将三台机器主机名和IP进行映射，后续通过主机名就可以访问对应的机器
+      vi /etc/hosts
+           加入映射内容如下：
+      192.168.xx.xxx   bigdata1
+      192.168.xx.xxx   bigdata2
+      192.168.xx.xxx   bigdata3
+  
+      保证其他两台机器/etc/hosts也有同样的内容
+      1）在其他机器去修改内容
+      2）远程拷贝文件覆盖到其他机器：
+            scp /etc/hosts 192.168.44.83:/etc/
+     【通过主机名可以互相ping通】
+
+4、配置SSH免密登录
+     1）普通情况【未配置免密登录时】：ssh root@192.168.44.XXX 会提示你输入yes、输入密码比较麻烦
+     2）所以需要配置ssh免密登录到其他机器：
+          1》在第一台机器master机器上产生秘钥
+                ssh-keygen -t rsa
+          2》将秘钥对应数据拷贝到三台机器（包括自己）
+               ssh-copy-id -i root@主机名1
+               ssh-copy-id -i root@主机名2
+               ssh-copy-id -i root@主机名3
+          3》测试：在master主机上输入： ssh 其他主机名
+
+5、安装Jdk
+     1》确认当前虚拟机中是否自带安装jdk
+           java -version
+          rpm -qa | grep java
+          如果出现了内容，则进行如下命令卸载：
+          rpm -e --nodeps java-1.8.0-openjdk-headless-1.8.0.65-3.b17.el7.x86_64
+          rpm -e --nodeps java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64
+          【--nodeps后面的内容则是rpm -qa 查询出来的内容复制过来】
+     2》正式开始安装Jdk
+           1）解压jdk压缩文件到指定目录
+                 tar -zxvf jdk...tar.gz -C /usr/local/src
+           2）进入/usr/local/src目录，对解压后的jdk目录重命名【改短一点】
+                 mv jdk1.8.0_212/   jdk
+           3）配置Jdk环境变量【linux能够很好的识别到Java相关的命令】
+                A》针对root账户生效的环境变量文件：/root/.bash_profile
+                B》针对所有账户生效的环境变量文件：/etc/profile
+                编辑环境变量配置文件加入下列内容：
+                export JAVA_HOME=/usr/local/src/jdk
+                export PATH=$PATH:$JAVA_HOME/bin
+          4）然后环境变量马上生效： source  /root/.bash_profile
+          5）测试jdk是否安装成功：
+               java -version 查看jdk版本
+               java或者javac
+      3》将jdk远程拷贝至其他两台机器对应的目录下
+            scp -r /usr/local/src/jdk  bigdata2:/usr/local/src
+           将环境变量配置文件也同步拷贝到其他两台机器对应目录下
+            scp /root/.bash_profile bigdata2:/root/
+           注意：其他两台机器也需要source一下，否则环境变量不生效，输入命令无法识别
+【环境变量配置的目的：让操作系统更好的识别到安装的这个软件中的命令】
+
+6、MySql5.7的安装使用【比赛不要求安装mysql，已经装好了】
+     1》因centos7中自带了mariadb数据库，会和mysql发生冲突，先将其卸载了
+           rpm -qa | grep mariadb
+           如果查询出来有内容，则将其卸载，命令如下：
+           rpm -e --nodeps mariadb-libs-5.5.60-1.el7_5.x86_64
+     2》创建mysql用户组和用户
+           groupadd mysql
+           useradd -r -g mysql mysql
+     3》解压jdk安装包（mysql-5.7.40-linux-glibc2.12-x86_64.tar.gz）到指定位置
+          tar -zxvf /mysoft/mysql-5.7.40-linux-glibc2.12-x86_64.tar.gz -C /usr/local/src/
+     4》进入/usr/local/src下，将解压后的目录改个名字
+           mv mysql-5.7.40-linux-glibc2.12-x86_64/ mysql5.7
+     5》修改mysql5.7目录及子目录权限：
+           chown -R mysql:mysql /usr/local/src/mysql5.7
+           chmod -R 755 /usr/local/src/mysql5.7/
+     6》进入/usr/local/src/mysql5.7/bin/下，执行初始化mysql命令：
+           ./mysqld --initialize --user=mysql --datadir=/usr/local/src/mysql5.7/data --basedir=/usr/local/src/mysql5.7
+          【注意：将初始化最后生成的mysql第一次默认登录密码复制出来】
+     7》新建编辑/etc/my.cnf
+[mysqld]
+datadir=/usr/local/src/mysql5.7/data
+port=3306
+sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
+symbolic-links=0
+max_connections=400
+innodb_file_per_table=1
+#表名大小写不明感，敏感为
+lower_case_table_names=1
+
+           将/etc/my.cnf进行授权：chmod -R 775 /etc/my.cnf
+      8》修改/usr/local/src/mysql5.7/support-files/目录下的mysql.server文件，
+            将 if test-z "$basedir"
+if test -z "$basedir"
+then
+  basedir=/usr/local/src/mysql5.7      （1个）
+  bindir=/usr/local/src/mysql5.7/bin   （2个）
+  if test -z "$datadir"
+  then
+    datadir=/usr/local/src/mysql5.7/data（3个）
+  fi
+  sbindir=/usr/local/src/mysql5.7/bin（4个）
+  libexecdir=/usr/local/src/mysql5.7/bin（5个）
+
+     9》启动服务：进入到/usr/local/src/support-files/目录下执行：
+          /usr/local/src/support-files/mysql.server start
+          【不出意外会显示SUCCESS成功】
+
+     10》创建软连接方便后续启动mysql
+             ln -s /usr/local/src/mysql5.7/support-files/mysql.server /etc/init.d/mysql
+             ln -s /usr/local/src/mysql5.7/bin/mysql /usr/bin/mysql
+
+             测试重新启动mysql：service mysql restart
+
+      11》登录mysql修改初始密码：
+              mysql -u root -p  
+               输入前面初始化后的第一次默认密码
+
+              在mysql的命令行中执行：
+              set password for root@localhost = password('123456');
+
+      12》远程授权，在mysql命令行下执行：
+  授权mysql远程访问（否则其他机器无法连接上该mysql）
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '123456' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.xx.xx' IDENTIFIED BY '123456' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '123456' WITH GRANT OPTION;
+flush privileges;
+
+      13》在windows下的navicat测试连接该虚拟机中的mysql5.7
+
+

@@ -1,0 +1,178 @@
+
+jdk
+hadoop
+hive
+flink
+spark
+
+flume：日志采集的工具组件（阶段1和2、阶段3）
+zookeeper：集群中做协调衔接、选举等作用
+kafka：消息中间件
+
+
+1、Flume安装配置：
+     1）解压flume到指定目录，并改名
+     2）配置flume环境变量：vim /root/.bash_profile
+          export FLUME_HOME=/usr/local/src/flume
+          export PATH=$PATH:$FLUME_HOME/bin
+          
+          生效：source /root/.bash_profile
+      3）配置采集器的内容：
+           1》采集端口的数据并打印到控制台
+	#定义采集器的三个组件名称
+	a1.sources=r1
+	a1.channels=c1
+	a1.sinks=k1
+	#数据从哪来（某个机器的端口中来）
+	a1.sources.r1.type=netcat
+	a1.sources.r1.bind=bigdata1
+	a1.sources.r1.port=12000
+	#数据缓存到内存中
+	a1.channels.c1.type=memory
+	a1.channels.c1.capacity=1000
+	a1.channels.c1.transactionCapacity=100
+	#数据打印到控制台（到哪去）
+	a1.sinks.k1.type=logger
+	#绑定三者关联
+	a1.sources.r1.channels=c1
+	a1.sinks.k1.channel=c1
+
+               在其他机器上执行（先启动flume对端口进行监听，然后使用nc连接这个端口发送数据）：nc bigdata1 12000
+
+           2》采集文件中内容变化的数据
+	a1.sources=r1
+	a1.channels=c1
+	a1.sinks=k1
+
+	a1.sources.r1.type=exec
+	a1.sources.r1.command=tail -F /opt/test/word.txt
+
+	a1.channels.c1.type=memory
+
+	a1.sinks.k1.type=logger
+
+	a1.sources.r1.channels=c1
+	a1.sinks.k1.channel=c1
+
+               如何向文件中追加内容：echo "内容">>/opt/test/word.txt
+
+       4）启动flume
+            flume-ng agent -c conf -f /usr/local/src/flume/conf/dk.conf --name a1 -Dflume.root.logger=INFO,console
+ 
+        其他：flume还可以采集目录下的结构变化
+                  flume还可以将采集到的内容存储到hdfs中
+                  flume还可以将采集到的内容存储到kafka中
+
+2、zookeeper安装配置
+     1）zookeeper在大数据各个组件集群环境下负责协调，选举等后台支持
+     2）安装步骤：
+          1》解压、重命名
+          2》环境变量  vim /root/.bash_profile
+	export ZOOKEEPER_HOME=/usr/local/src/zookeeper
+	export PATH=$PATH:$ZOOKEEPER_HOME/bin
+                生效：source /root/.bash_profile
+          3》进入zookeeper/conf下，复制一个配置文件命令为 zoo.cfg
+               cp zoo_sample.cfg zoo.cfg
+          4》编辑zoo.cfg配置文件：
+               	dataDir=/usr/local/src/zkdata
+	dataLogDir=/usr/local/src/zklogs
+	
+                server.1=bigdata1:2888:3888
+	server.2=bigdata2:2888:3888
+	server.3=bigdata3:2888:3888
+          5》在dataDir目录下新建一个myid的文件，里面写上1
+          6》将zookeeper拷贝至其他机器：
+                scp -r /usr/local/src/zookeeper/ bigdata2:/usr/local/src/
+                scp -r /usr/local/src/zookeeper/ bigdata3:/usr/local/src/
+          7》分别在bigdata2和bigdata3中zookeeper的dataDir下修改myid分别为2、3
+          8》分别三台机器上启动zookeeper：
+               zkServer.sh start
+               查看状态：zkServer.sh status
+               停止服务：zkServer.sh stop
+          启动报错，自己学会看日志：/usr/local/src/zookeeper/logs
+          【zookeeper启动后的进程：QuorumPeerMain】
+                
+3、kafka（分布式消息订阅系统）
+     1）基于zookeeper所以需要先安装好zookeeper
+     2）kafka的安装配置：
+           1》解压、重命名
+           2》环境变量： vim /root/.bash_profile
+	export KAFKA_HOME=/usr/local/src/kafka
+	export PATH=$PATH:$KAFKA_HOME/bin
+                 生效： source /root/.bash_profile
+           3》编辑kafka下/config下/server.properties
+                 broker.id=1（三台机器的这个id是不同的）
+                 hostname=192.168.XX.XXX（当前主机的ip）
+                 log.dirs=/usr/local/src/kafka/logs（kafka的日志目录）
+                 zookeeper.connect=bigdata1:2181,bigdata2:2181,bigdata3:2181（zookeeper集群地址，逗号分隔）
+                 加入kafka允许远程访问（后续通过idea调试kafka中的数据）
+                 listeners=PLAINTEXT://0.0.0.0:9092
+	advertised.host.name=当前机器主机名
+	advertised.listeners=PLAINTEXT://192.168.XX.XXX:9092
+          4》将kafka和环境变量远程拷贝至其他机器
+                 scp -r /usr/local/src/kafka/ bigdata2:/usr/local/src/
+                 scp -r /usr/local/src/kafka/ bigdata3:/usr/local/src/
+
+                 scp /root/.bash_profile bigdata2:/root/
+                 scp /root/.bash_profile bigdata3:/root/
+          5》修改其他机器kafka上的broker.id和ip地址，主机名都对应修改好
+          6》三台机器分别启动kafka（先保证zookeeper是正常的）
+               kafka-server-start.sh -daemon /usr/local/src/kafka/config/server.properties
+              【说明：-daemon代表后台进程方式启动】
+              【kafka启动后进程就是kafka】
+               停止kafka服务：kafka-server-stop.sh
+
+          7》kafka的使用：
+                1】创建主题
+                      kafka-topics.sh --create --zookeeper bigdata1:2181 --replication-factor 1 --partitions 1 --topic 主题名
+                2】查看主题
+                      kafka-topics.sh --list --zookeeper bigdata1:2181
+                3】删除主题
+                      说明：启动Kafaka时如果加载的配置文件中"server.properties"没有配置"delete.topic.enable=true"，那么此时的删除并不是真正的删除，而是把该topic标记为"marked for deletion"。追加参数后记得重启Kafka。
+                      kafka-topics.sh --delete --zookeeper bigdata1:2181  --topic 主题名
+                4】启动生产者【模拟向kafka的指定主题发送数据】
+                     kafka-console-producer.sh --broker-list bigdata1:9092 --topic 主题名
+                5】启动消费者【模糊查看kafka指定主题的数据】
+                     kafka-console-consumer.sh --bootstrap-server bigdata1:9092 --topic 主题名 --from-beginning
+
+4、Flume采集数据后存入Kafka中
+      Flume数据存入kafka主要配置如下：
+	a1.sinks.k1.type=org.apache.flume.sink.kafka.KafkaSink
+	a1.sinks.k1.brokerList=bigdata1:9092,bigdata2:9092,bigdata3:9092
+	a1.sinks.k1.topic=lol
+	a1.sinks.k1.serializer.class=kafka.serializer.StringEncoder
+ 
+     
+           【不同版本配置单词写法略有差异】
+	a1.sinks.k1.kafka.topic = 主题名
+	a1.sinks.k1.kafka.bootstrap.servers = bigdata1:9092,bigdata2:9092,bigdata3:9092
+
+
+双Sink（分别sink到控制台、kafka中）
+a1.sources=r1
+a1.channels=c1 c2
+a1.sinks=k1 k2
+
+a1.sources.r1.type=netcat
+a1.sources.r1.bind=bigdata1
+a1.sources.r1.port=12000
+
+a1.channels.c1.type=memory
+a1.channels.c1.capacity=1000
+a1.channels.c1.transactionCapacity=100
+
+a1.channels.c2.type=memory
+
+a1.sinks.k2.type=logger
+
+a1.sinks.k1.type=org.apache.flume.sink.kafka.KafkaSink
+a1.sinks.k1.brokerList=bigdata1:9092,bigdata2:9092,bigdata3:9092
+a1.sinks.k1.topic=lol
+a1.sinks.k1.serializer.class=kafka.serializer.StringEncoder
+
+
+a1.sources.r1.channels=c1 c2
+a1.sinks.k1.channel=c1
+a1.sinks.k2.channel=c2
+
+

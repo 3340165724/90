@@ -1,0 +1,92 @@
+1、HBase安装配置启动
+    【前提条件：hadoop启动、zookeeper启动】
+     1）解压hbase到指定目录、重命名
+     2）配置hbase环境变量：vim /root/.bash_profile
+          export HBASE_HOME=/usr/local/src/hbase
+          export PATH=$PATH:$HBASE_HOME/bin
+
+          生效：source /root/.bash_profile
+     3）修改hbase的配置文件
+          1》hbase-env.sh
+               export hbase_managers_zk=false  这里改为false代表使用外部zookeeper
+               export JAVA_HOME=/usr/local/src/jdk
+
+          2》hbase-site.xml
+               hbase.cluster.distributed 
+               true
+
+               hbase.zookeeper.quorum
+               zookeeper集群的地址，不需要端口（写了也没错），如：bigdata1,bigdata2,bigdata3
+
+               hbase.rootdir
+               hdfs://bigdata1:9000/hbase
+               
+        <property>
+                <name>hbase.unsafe.stream.capability.enforce</name>
+                <value>false</value>
+        </property>
+
+           3》regionservers
+                写入datanode对应的机器节点名，如 
+                 bigdata1  
+                 bigdata2
+                 bigdata3
+     4）//包冲突解决：
+          //将hbase/lib下的slf4j-reload4j-1.XXXX.jar 改个名字，后面加个bak打个标记
+     5）将hbase远程拷贝到其他两台机器上去
+          scp -r /usr/local/src/hbase/ bigdata2:/usr/local/src/
+          scp -r /usr/local/src/hbase/ bigdata3:/usr/local/src/
+  
+          scp /root/.bash_profile bigdata2:/root/
+          source /root/.bash_profile
+          
+          scp /root/.bash_profile bigdata3:/root/
+          source /root/.bash_profile
+     6）启动hbase
+          start-hbase.sh
+          停止hbase：stop-hbase.sh
+     7）访问hbase的web页面（端口默认是16010）
+          http://192.168.xx.xxx:16010
+          【最终输入jps：HMasger1个、HRegionServer3个】
+
+2、HBase的使用（输入  hbase shell  进入hbase命令行）
+     1）list_namespace 查看所有命名空间（类似于数据库概念）
+     2）create_namespace ‘xxx’  创建命名空间
+     3）list 查看所有的表
+          查看某个命名空间下的表：list_namespace_tables "testns"
+     4）create '命名空间:表名','列族名','列族名'
+          删除命名空间：drop_namespace "namespace"
+     5）describe '表名'，或者 describe  '命名空间:表名'
+     6）disable '命名空间:表名'  先禁用表
+          drop '命名空间:表名'  再删除表
+    7）向表中加入数据：
+         put '命名空间:表名','rowkey','列族:列名','值' 
+         put 'student1','1001','infos:name','jack'
+         put 'student1','1001','infos:sex','男'
+    8）取出一行数据；get命令,get最多取出一行数据
+         取出一行数据：get '命名空间:表名','rowkey'
+         取出一行一列数据：get '命名空间:表名','rowkey',{COLUMN=>'列族:列名'}
+         取出一行多列数据：get '命名空间:表名','rowkey',{COLUMN=>['列族:列名','列族:列名']}
+    9）取出多行数据：scan '命名空间:表名'
+         扫描全表：scan '命名空间:表名'
+         扫描全表指定列：scan '命名空间:表名',{COLUMNS=>['infos:name','concats:tel']}
+         扫描rowkey范围的数据行：
+         scan 'student1',{STARTROW=>'1001',STOPROW=>'1003'}
+         扫描rowkey范围的指定列数据：
+         scan 'student1',{STARTROW=>'1001',STOPROW=>'1003',COLUMNS=>['infos:name','concats:tel']}
+
+         查看表中前两条数据：
+         scan '命名空间:表名',{LIMIT=>2}
+
+    10）删除数据（同时只能删除一个Cell）
+         删除最新版本（CELL）：
+         delete 'bigdata:student','1001','info:name'
+         删除所有版本数据：
+         deleteall 'bigdata:student','1001','info:name'
+         deleteall可以删除一行：deleteall 'student1','1001'
+
+      11）清空表：truncate '命名空间:表名'
+      12）查看表的行数（rowkey的数量）： count '命名空间:表名'
+      
+
+          

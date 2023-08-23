@@ -1,0 +1,89 @@
+
+
+1、Hive是一个基于hadoop的数据仓库
+     hive中表的数据和hdfs上的文件是映射关系
+     hive中的元数据（hive中创建的数据库、表、列、分区等信息是存储再关系型数据库中的）
+     【安装使用hive之前先准备好：jdk、hadoop、mysql】
+
+2、安装Hive
+     1）解压hive安装包到指定目录
+          tar -zxvf /mysoft/apache-hive-3.1.2-bin.tar.gz -C /usr/local/src/
+     2）重命名：
+          cd /usr/local/src
+          mv apache-hive-3.1.2-bin/ hive
+     3）环境变量：
+          vim /root/.bash_profile
+                 export HIVE_HOME=/usr/local/src/hive
+                 export PATH=$PATH:$HIVE_HOME/bin
+          source /root/.bash_profile
+      4）hive的配置文件叫 hive-site.xml
+            1》复制hive-default.xml一个进行修改
+            2》自己创建一个空白的hive-site.xml加入配置【推荐】
+
+            javax.jdo.option.ConnectionUserName
+           root  
+           【连接mysql的登录账号】
+
+            javax.jdo.option.ConnectionPassword
+           123456 
+           【连接mysql的密码】
+            
+           javax.jdo.option.ConnectionURL
+           jdbc:mysql://192.168.44.61:3306/myhive1?createDatabaseIfNotExist=true&amp;useSSL=false&amp;characterEncoding=utf-8
+           【连接mysql的地址】
+
+          javax.jdo.option.ConnectionDriverName
+          com.mysql.jdbc.Driver
+            【连接mysql需要的驱动】
+     5）将java连接mysql的驱动包拷贝到hive下的lib下
+          cp /mysoft/mysql-connector-java-5.1.37.jar /usr/local/src/hive/lib/
+
+      6）冲突包的解决（hive3.1.2这个版本里面的包和hadoop的包产生了冲突，需要处理一下）
+            1》将log4j-slf4j的一个jar包改个名字：
+                  mv log4j-slf4j-impl-2.10.0.jar log4j-slf4j-impl-2.10.0.jar.bak
+            2》删除hive/lib下的guava-19.0.jar【必须修改的】
+                  rm -rf /usr/local/src/hive/lib/guava-19.0.jar
+
+                 将hadoop下的guava包复制到hive的lib下：
+                 cp /usr/local/src/hadoop/share/hadoop/common/lib/guava-27.0-jre.jar /usr/local/src/hive/lib/
+
+       7）初始化hive元数据仓库【在hive元数据存放的mysql中创建一系列元数据表】
+             schematool -dbType mysql -initSchema
+
+             常见错误1：
+                   ClassNotFoundException : com.mysql.jdbc.Driver
+                   1》javax.jdo.option.ConnectionDriverName配置错误
+                   2》java练级mysql的驱动没有放到hive/lib下
+             常见错误2：
+                    Access denied for user 'rootaaa'@'bigdata1' (using password: YES)
+                    1》连接mysql的账号或密码写错了
+             常见错误3：
+                    CommunicationsException : Communications link failure
+                    1》mysql所在机器的ip地址写错了
+                    2》mysql不允许通过ip远程连接【授权远程连接】
+            
+             常见错误4：版本检测错误
+                    hive.metastore.schema.verification
+                    false
+
+             常见错误5：如果使用自带模板修改的hive-site.xml，有时会报expansion character (code 0x8
+ at [row,col,system-id]: [3215,96,"file:/usr/local/src/hive/conf/hive-site.xml"]特殊字符的问题，   将3215行的“&#8”给删了即可。
+          显示行号  :set number
+          定位到行号： :3215
+          关闭行号  set nonu
+
+            常见错误6（启动）：
+            NoSuchMethodError: com.google.common.base.Preconditions.checkArgument(ZLjava/lang/String;Ljava/lang/Object;)V
+            1》包冲突问题，hive/lib下的guava包和hadoop中的guava冲突【见上面hive的那个冲突包解决】
+  
+           常见错误7（启动）：SafeModeException报hadoop的namenode处于安全模式：
+            1》hdfs dfsadmin -safemode leave
+           
+            常见错误8（启动）：URISyntaxException: Relative path in absolute URI: ${system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D
+            1》删除hive-site.xml中下列几个配置：
+                 hive.querylog.location
+                 hive.exec.local.scratchdir
+                 hive.downloaded.resources.dir
+
+
+

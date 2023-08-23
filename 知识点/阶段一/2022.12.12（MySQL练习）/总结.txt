@@ -1,0 +1,8 @@
+问题：
+登录MySQL时出现错误
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (111)
+
+解决：
+重新启动MySQL服务
+/usr/local/src/mysql5.7/support-files/mysql.server start
+          【不出意外会显示SUCCESS成功】

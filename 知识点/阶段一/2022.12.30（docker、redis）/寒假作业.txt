@@ -1,0 +1,3 @@
+@全体成员 寒假练习：
+1、在docker下完成阶段一各个组件的配置并截图（
+jdk、hadooop完全分布式、spark、flink、zookeeper、hbase、hive、flume、kafka、clickhouse）

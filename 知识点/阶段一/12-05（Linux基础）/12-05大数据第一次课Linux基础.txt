@@ -1,0 +1,155 @@
+12-5日大数据技能大赛课堂笔记
+
+3个人参赛
+6个阶段的内容
+不同省份比赛时间时长不同（4个小时、7个小时）
+
+编程基础、数据库SQL基础、Html基础、Javascript基础（最好）
+
+阶段一：环境搭建和配置（10分）
+Docker、Jdk、hadoop完全分布式、Hive、HBase、Flink、Spark、Zookeeper、Kafka、Flume、Clickhouse
+
+阶段二：数据采集（离线采集、实时采集）（15分）
+1、使用spark完成离线数据采集（编写代码从mysql中拿出数据存入hive中对应的表）
+2、使用Flume采集端口的数据存入Kafka对应的主题中
+3、使用Maxwell采集mysql的日志，并存入Kafka对应的主题中
+
+阶段三：实时数据处理（flink）（25分）
+
+阶段四：离线数据处理（spark）（20分）
+1、数据清洗处理
+2、指标计算
+
+阶段五：数据可视化（vue-cli、echarts完成各种图表）（15分）
+
+阶段六：综合分析报告（问答题）（10分）
+
+目前分组：
+阶段1+5
+阶段2+4
+阶段3+6
+
+每个阶段一个文档（比赛结果不看代码，只要结果的截图），组长合并文档，拷到U盘提交。
+
+
+电脑内存建议：16G以上， >=16G内存
+
+——————————————————————————
+
+1、ls 列出目录下所有的内容
+     -l  详细信息列出（第一个d代表是目录，-代表是文件，l代表是链接文件）
+     -a  列出包括隐藏文件
+     
+2、cd 进入某个目录
+     cd /etc/sysconfig/network-scripts
+     cd ~ 进入当前用户自己的目录
+     cd / 直接进入根目录
+     cd ..  返回上级目录
+
+3、pwd：查看当前所处的目录
+
+    【新建账户，useradd  test】
+    【切换账户，su test】
+4、chmod 修改文件的权限
+     权限说明：[-rwxrwxrwx] 三个一组一共三组（当前用户、当前用户组、其他用户），r代表可读、w代表可写、x代表可执行
+     chmod 777 /xxx/xxx.txt   给所有权限这个文件
+     chmod -R 755 /xxx/xxx   递归给该目录及目录下所有的子目录、文件权限
+
+5、cat查看文件内容的命令：
+     cat /etc/sysconfig/network-scripts/ifcfg-ens33
+
+6、创建目录：mkdir   
+     cd /opt
+     mkdir test1 在opt下新建test1目录
+     mkdir test1 test2 在opt下新建test1和test2目录
+     mkdir -p test1/test2  在opt下新建test1，test1下面新建test2子目录
+
+7、cp 复制
+     cp /opt/test/haha.txt  /opt/test3
+     cp -r  /opt/test  /opt/test3 拷贝目录需要加入-r，代表递归拷贝子目录
+
+     远程拷贝 scp
+
+8、删除命令：rm
+     rm  /xxx/xxx.txt  删除文件
+     rm -f  目录或者文件   不提示直接删除
+     rm -r  /xxx/XX 递归删除该目录和子目录内容
+
+9、mv命令重命名或者移动
+     重命名： mv /xxx/xxx.txt  /xxx/aaa.txt
+                  mv xxx.txt  xx.txt
+
+10、解压命令：
+       tar -zxvf 压缩包名  解压到当前目录
+       tar -zxvf 压缩包名 -C  解压后的目录（使用这个命令比较多）
+
+11、vi文本编辑器（vim升级版的，但是需要联网安装）
+       vi xxx.txt  【新建或编辑指定文件】
+       按一下字母 i 或者a进入编辑输入模式【底部会出现INSERT】
+       输入完毕之后按ESC键退出输入模式，输入命令    :wq  保存退出
+
+12、防火墙管理：
+      1）查看防火墙状态：systemctl status firewalld
+      2）停止防火墙（重启后恢复）：systemctl stop firewalld
+      3）永久禁用防火墙：systemctl disable firewalld
+
+13、网络服务管理：
+      1）启动网络服务：systemctl start network
+                       或者：service network start
+      2）停止网络服务：systemctl stop network
+                       或者：service network stop
+      3）重启网络服务：systemctl restart network
+                       或者：service network restart
+
+14、杀掉某个进程：
+       kill -9 进程ID
+
+15、网络配置
+       1）桥接模式（虚拟机中的ip地址和物理机使用的网络ip地址保持一致）
+       2）NAT模式（打开VMWare--编辑菜单--》虚拟网络编辑器--》选择Nat模式--》查看下方子网的地址）虚拟机中的ip地址就是该子网网段即可，如
+            虚拟网络编辑器中是：192.168.44.0---虚拟机中的ip就应该设置为192.168.44.[3到255都可以]
+
+       修改虚拟机中的网络配置：
+       1）进入到网卡配置文件的目录：
+            cd /etc/sysconfig/network-scripts
+       2）输入ls查看一下是否存在  ifcfg-ens33
+       3）编辑这个文件：
+            vi ifcfg-ens33
+       4）修改内容如下（先输入字母i或者a进入编辑输入模式）
+            BOOTPROTO=static  【原来是dhcp自动分配ip，改为静态的】
+            ONBOOT=yes  【自动启动网络配置改为yes，原来是no】
+            新增下面：
+            IPADDR=192.168.xx.xxx  【xxx要改为和自己虚拟网络编辑器中看到的网段一样】
+            GATEWAY=192.168.xx.2  【改为对应的网关】
+            DNS1=8.8.8.8   【如果8不行，改为114.114.114.114】
+       5）重启网络服务：systemctl restart network
+       6）测试： ping www.163.com
+
+16、安装 vim 编辑器：
+       yum install -y vim
+
+17、vim编辑器（比vi更强大一些），命令模式下输入下列内容：
+       gg 回到第一行
+       G 到文件的末尾
+       $ 到一行的的末尾
+       ^ 到一行的开头
+       :行号  定位到第几行
+       搜索： /xxx  搜索内容，按n定位到找到的下一个内容
+       忽略大小写搜索： 先输入      :set  ic
+       替换：  :%s/被替换内容/替换后的内容/g
+                  :%s/ha/he/g   把文件中所有的ha改为he 【%代表整个文件，g代表包含了字符串也替换】
+
+18、linux中文件搜索命令：
+       find /路径  -name 文件名
+       find / -name '*java*'  【从根目录下去找名字带有java的文件】
+ 
+19、查看端口被占用情况：
+      1）安装net-tools ：  yum install -y net-tools
+      2）查看某个端口占用情况：
+           netstat -tunlp | grep 22
+
+20、将网络配置好的虚拟机克隆3份出来
+       1）将配置好网络的虚拟机另外克隆2台出来
+       2）分别启动三台虚拟机，然后修改另外两台机器的ip地址，三台机器互相能够ping通
+
+       可以将第一台机器拍摄一个快照，方便后期出问题了随时还原（但是快照比较占存储空间）

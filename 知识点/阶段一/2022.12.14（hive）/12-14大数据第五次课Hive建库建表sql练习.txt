@@ -1,0 +1,61 @@
+
+1、hive命令：
+     1）show databases; 查看所有的数据库
+     2）create database 数据库名;  创建数据库
+     3）use 数据库名 ;   使用某个数据库
+     4）show tables; 查看某个数据库下的所有表
+
+2、创建表：
+     create [external] table 表名(列名 类型,列名 类型,列名 类型)
+     row format delimited 
+     fields terminated by '\t' 
+     lines terminated by '\n';
+     【fields terminated by 代表文件中每行数据字段分隔符】
+     【lines terminated by 代表文件中行与行之间的分隔符】
+
+3、数据导入表中
+     1》将hdfs中的数据文件导入hive中
+           load data inpath '/test1/tb_student.txt' overwrite into table tb_student;
+     2》将虚拟机中的数据文件导入hive中
+           load data local inpath '/opt/test/tb_student.txt' overwrite into table tb_student;
+     3》清除表中的数据：
+           truncate table 表名;  【不能删除表中的分区，只能删除表中的数据】
+
+4、创建分区表：
+      create [external] table 表名(列名 类型,列名 类型,列名 类型)
+      partitioned by(分区列名 类型)
+     row format delimited 
+     fields terminated by '\t' 
+     lines terminated by '\n';
+     【partitioned by 即是创建表的分区】
+ 
+       //静态分区
+       load data local inpath '/opt/test/tb_student.txt' overwrite into table tb_student partition(分区列名=值);  【分区列为字符串的话，='值'】
+
+      【为什么要分区：分区在hive中创建后，在hdfs中体现的就是一个目录，目的是按分区列将数据切分为小文件，在检索的时候如果使用到了分区列，则只会涉及到该分区下的文件数据，提升检索使用的效率】
+
+      查看表的分区信息：
+      show partitions 表名;
+      show partitions 库名.表名;
+ 
+       删除分区：
+       alter table 表名 drop partition(分区列=分区列的值)
+       alter table 表名 drop partition(分区列 <= 2022)
+       【删除分区后该分区的数据也会被同步删除】
+
+5、查看表结构命令：
+     1）desc 表名; 查看表的列信息
+     2）desc extended tb_class; 查看更加详细的表信息
+     3）show create table tb_class; 查看建表语句
+     4）查看hive中所有的函数： show functions;
+
+6、基于hive下的两个表sql练习：
+     1）统计各个地区下学生人数
+     2）统计各个地区下学生人数top5，按降序排列
+     3）统计各个班级下的人数，按人数降序排列
+     4）统计各个学校下的人数Top3，按人数降序排列
+     5）统计各个地区下学生人数，并且进行排名（额外增加一列排名列）
+           row_number()排名函数，一般需要配合over()开窗限制范围
+           
+
+

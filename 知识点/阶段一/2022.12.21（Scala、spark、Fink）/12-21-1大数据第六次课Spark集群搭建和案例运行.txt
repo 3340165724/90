@@ -1,0 +1,44 @@
+
+1、Spark集群安装配置
+     1）解压、重命名、环境变量（bin和sbin）
+     2）修改spark配置文件（cp spark-env.sh.template spark-env.sh）
+          export JAVA_HOME=
+          export SPARK_MASTER_HOST=主节点的主机名
+          export SPARK_MASTER_PORT=7077
+          export SPARK_CONF_DIR=spark配置文件的目录
+          export HADOOP_CONF_DIR=/usr/local/src/hadoop/etc/hadoop
+   
+          export SPARK_WORKER_CORES=1
+          export SPARK_WORKER_MEMORY=1g
+
+      3）修改worker工作任务节点（cp workers.template workers）
+           将三台机器主机名放入
+      4）远程拷贝spark到其他两台机器上
+      5）启动spark集群
+           cd /usr/local/src/spark/sbin
+           ./start-all.sh
+      6）访问Web界面：  http://ip:8080
+      7）运行自带的Pi值计算案例：
+           1》spark on yarn方式来运行得到结果（无需启动spark集群，但是要启动hadoop）--比赛常用
+                spark-submit --master yarn --class org.apache.spark.examples.SparkPi --executor-memory 1g --total-executor-cores 2  /usr/local/src/spark/examples/jars/spark-examples_2.xxxx......jar  100
+           2》spark集群运行得到结果（无需启动hadooop，但是要启动spark）
+                spark-submit --master spark://bigdata1:7077 --class org.apache.spark.examples.SparkPi --executor-memory 1g --total-executor-cores 2  /usr/local/src/spark/examples/jars/spark-examples_2.xxxx......jar  100
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,37 @@
+1）list_namespace 查看所有命名空间（类似于数据库概念）
+     2）create_namespace ‘xxx’  创建命名空间
+     3）list 查看所有的表
+          查看某个命名空间下的表：list_namespace_tables "testns"
+     4）create '命名空间:表名','列族名','列族名'
+          删除命名空间：drop_namespace "namespace"
+     5）describe '表名'，或者 describe  '命名空间:表名'
+     6）disable '命名空间:表名'  先禁用表
+          drop '命名空间:表名'  再删除表
+    7）向表中加入数据：
+         put '命名空间:表名','rowkey','列族:列名','值' 
+         put 'student1','1001','infos:name','jack'
+         put 'student1','1001','infos:sex','男'
+    8）取出一行数据；get命令,get最多取出一行数据
+         取出一行数据：get '命名空间:表名','rowkey'
+         取出一行一列数据：get '命名空间:表名','rowkey',{COLUMN=>'列族:列名'}
+         取出一行多列数据：get '命名空间:表名','rowkey',{COLUMN=>['列族:列名','列族:列名']}
+    9）取出多行数据：scan '命名空间:表名'
+         扫描全表：scan '命名空间:表名'
+         扫描全表指定列：scan '命名空间:表名',{COLUMNS=>['infos:name','concats:tel']}
+         扫描rowkey范围的数据行：
+         scan 'student1',{STARTROW=>'1001',STOPROW=>'1003'}
+         扫描rowkey范围的指定列数据：
+         scan 'student1',{STARTROW=>'1001',STOPROW=>'1003',COLUMNS=>['infos:name','concats:tel']}
+
+         查看表中前两条数据：
+         scan '命名空间:表名',{LIMIT=>2}
+
+    10）删除数据（同时只能删除一个Cell）
+         删除最新版本（CELL）：
+         delete 'bigdata:student','1001','info:name'
+         删除所有版本数据：
+         deleteall 'bigdata:student','1001','info:name'
+         deleteall可以删除一行：deleteall 'student1','1001'
+
+      11）清空表：truncate '命名空间:表名'
+      12）查看表的行数（rowkey的数量）： count '命名空间:表名'

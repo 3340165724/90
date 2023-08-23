@@ -1,0 +1,182 @@
+
+SQL复习：
+1、查询的关键字：select
+2、查询的语法：
+     select 列 from 表
+3、条件查询语法：
+     select 列1,列2,... from 表 where 列=值 and 列=值
+4、分组查询（统计各个XX下的总人数/平均值/总和等等）
+      select 分组列,聚合函数(列) from 表 group by 分组列
+
+     【说明：分组聚合时，select后面不能出现除分组和聚合函数以外的列】
+     【说明：如果多列分组，则select后面一般会出现分组的多个列和聚合列】
+5、排序：order by
+      一般是在结果统计完毕，最后进行排序操作，如下：
+     升序：select * from 表 order by 列
+     降序：select * from 表 order by 列 desc
+ 
+     多列排序：
+     select * from 表 order by 列1 desc,列2 desc
+    【先按列1值排序，如果列1值是一样的，则在一样数据中在按列2排】
+
+6、多表关联查询：
+     select * from 表1 inner join 表2 on 表1.列 = 表2.列
+   【注意：on后面表1的列和表2的列都是有关联一样的列】
+
+7、查询指定条数信息：
+      select 列 from 表 where... group by .... limit 3
+
+      select 列 from 表 where... group by .... limit 3,5 【从第三条开始，取5条记录】
+
+
+hadoop完全分布式（阶段一：环境搭建）（必考内容）
+1、hadoop是apache基金会维护的大数据核心框架
+2、hadoop解决海量数据的存储和计算分析问题
+3、hadoop中的核心组件：
+     1）hdfs 分布式文件存储系统（存储数据的）
+     2）mapreduce海量数据的计算分析问题（计算）
+     3）yarn整个hadoop运行中资源调度管理（资源管理）
+4、安装Hadoop完全分布式
+     1）将hadoop安装包上传到虚拟机中
+     2）解压hadoop安装包到指定位置：
+           tar -zxvf hadoop-3.1.3.tar.gz -C /usr/local/src/
+     3）进入/usr/local/src下，对解压的目录进行重命名
+           cd /usr/local/src
+           mv hadoop-3.1.3/ hadoop
+     4）配置环境变量：
+           vim /root/.bash_profile
+          加入：
+           export HADOOP_HOME=/usr/local/src/hadoop
+           export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
+           source /root/.bash_profile
+      5）输入hadoop version查看一下
+      6）进入到hadoop中配置文件的目录，修改5个配置文件：
+            cd /usr/local/src/hadoop/etc/hadoop/
+           1》hadoop-env.sh
+                 加入jdk的路径配置
+                 export JAVA_HOME=/usr/local/src/jdk
+
+	export HDFS_NAMENODE_USER=root
+	export HDFS_DATANODE_USER=root
+	export HDFS_SECONDARYNAMENODE_USER=root
+	export YARN_RESOURCEMANAGER_USER=root
+	export YARN_NODEMANAGER_USER=root
+                 【注意：下面几个配置到环境变量中也是可以的】
+   
+        2》core-site.xml（配置namenode的通信地址和hadoop数据文件存放的目录）
+              在<configuration>标签之间加入下列内容：
+             	 <property>
+		<name>fs.defaultFS</name>
+                		<value>hdfs://bigdata1:9000</value>
+        	</property>
+
+	<property>
+                		<name>hadoop.tmp.dir</name>
+                		<value>/opt/data/hadoop</value>
+        	</property>
+                 【注意：上面的bigdata1是作为namenode机器的主机名】
+                 【注意：hadoop.tmp.dir这个目录不能存在，启动时会自动创建的】
+
+         3》hdfs-site.xml（数据存入hdfs后产生的副本数）
+               在<configuration>标签之间加入下列内容：
+                <property>
+                                <name>dfs.replication</name>
+                                <value>3</value>
+                </property>
+
+        4》mapred-site.xml（执行mapreduce使用yarn资源调度来进行）
+                在<configuration>标签之间加入下列内容：
+                <property>
+                                <name>mapreduce.framework.name</name>
+                                <value>yarn</value>
+                </property>
+ 
+         5》yarn-site.xml（配置resnourcemanager资源调度管理者的机器是谁、最下面两个mem-check是关闭内存检测功能）
+              在<configuration>标签之间加入下列内容：
+
+                <property>
+                                <name>yarn.resourcemanager.hostname</name>
+                                <value>bigdata1</value>
+                </property>
+                <property>
+                                <name>yarn.nodemanager.aux-services</name>
+                                <value>mapreduce_shuffle</value>
+                </property>
+                <property>
+                                <name>yarn.nodemanager.pmem-check-enabled</name>
+                                <value>false</value>
+                </property>
+                <property>
+                                <name>yarn.nodemanager.vmem-check-enabled</name>
+                                <value>false</value>
+                </property>
+
+                【注意：bigdata1是主机名】
+
+       6》workers【注意配置datanode的节点机器】
+             将里面原来的localhost干掉，添加三台机器的主机名
+             	bigdata1
+	bigdata2
+	bigdata3
+
+     7》将配置好的hadoop远程分发给另外两台机器：
+          scp -r /usr/local/src/hadoop bigdata2:/usr/local/src
+          scp -r /usr/local/src/hadoop bigdata3:/usr/local/src
+
+          scp /root/.bash_profile bigdata2:/root/
+          scp /root/.bash_profile bigdata3:/root/
+
+          在bigdata2机器上：source /root/.bash_profile
+          在bigdata3机器上：source /root/.bash_profile
+      8》格式化namenode
+           hdfs namenode -format
+           【如果需要重置hadoop文件系统重新格式化的话，那么将core-site.xml中配置的那个hadoop.tmp.dir目录给删了，让其重新创建】
+
+     9》启动hadoop集群（在主节点上）
+          1>一键启动所有：start-all.sh
+          2>分开启动：
+                  a》启动hdfs：  start-dfs.sh
+                  b》启动yarn：  start-yarn.sh
+
+          停止hadoop，在主节点上执行：stop-all.sh
+
+     10》检测是否成功：
+          1）在主节点上输入 jps：
+               namenode
+               datanode
+               nodemanager
+               resourcemanager
+               seccondarynamendoe
+               
+              在其他从机节点上输入jps：
+              datanode
+              nodemanager
+         2）打开浏览器，输入：http://主节点虚拟机IP:9870 确认是否可以打开hadoop的webUI管理界面
+
+      11》在虚拟机本地创建一个word.txt文件，里面放入很多单词使用空格隔开
+            
+              将该word.txt文件上传至hadoop的hdfs中存储：
+              hdfs dfs -put /opt/test/word.txt /
+           
+      12》利用hadoop中自带的单词计算mapreduce案例，实现一个大数据计算的应用测试（顺便测试一下环境是否正常）
+              虚拟机中输入：
+              hadoop classpath
+              将出来的内容复制，编辑yarn-site.xml中，加入下列配置：
+                <property>
+                                <name>yarn.application.classpath</name>
+                                <value>将上面hadoop classpath出来的内容全部粘贴到这里</value>
+                </property>
+
+
+             重新停止和启动hadoop：
+             hadoop jar /usr/local/src/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.3.jar wordcount /word.txt /out1
+
+             【注意：输出结果的目录一定不能存在，如果存在会报错Output directory hdfs://bigdata1:9000/out1 already exists，将其删除再运行也可以】
+             在虚拟机中通过hdfs命令查看结果：
+             hdfs dfs -cat /out1/part-r-00000
+
+             如果报错中提示name node is safe mode，则执行命令退出安全模式：
+             hdfs dfsadmin -safemode leave
+
+
