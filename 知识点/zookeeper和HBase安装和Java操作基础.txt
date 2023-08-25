@@ -1,0 +1,191 @@
+
+1、Zookeeper集群搭建
+   1）zookeeper分布式环境下监控、选举、协调等功能的组件
+   2）安装步骤：
+	1》解压zookeper到指定路径并改名
+		tar -zxvf apache-zookeeper-3.5.7-bin.tar.gz -C /usr/local/src/
+		cd /usr/local/src/
+		mv apache-zookeeper-3.5.7-bin/ zookeeper
+	2》配置环境变量
+		vi /root/.bash_profile
+			export ZOOKEEPER_HOME=/usr/local/src/zookeeper
+			export PATH=$PATH:$ZOOKEEPER_HOME/bin
+		
+		source /root/.bash_profile
+	3》在zookeeper下新建两个目的
+		cd /usr/local/src/zookeeper 
+		mkdir data logs
+	4》修改zookeeper配置文件
+	cd /usr/local/src/zookeeper/conf/
+	cp zoo_sample.cfg zoo.cfg 
+		vi zoo.cfg 
+			dataDir=/usr/local/src/zookeeper/data
+			dataLogDir=/usr/local/src/zookeeper/logs
+			server.1=master:2888:3888
+			server.2=slave1:2888:3888
+			server.3=slave2:2888:3888
+	5》修改每个机器唯一标识，在data目录下新建myid文件
+		cd /usr/local/src/zookeeper/data
+		vi myid 
+			1
+	6》拷贝zookeeper到其他两台机器：
+		scp -r /usr/local/src/zookeeper/ slave1:/usr/local/src/
+		scp -r /usr/local/src/zookeeper/ slave2:/usr/local/src/
+		
+		scp /root/.bash_profile slave1:/root/
+		scp /root/.bash_profile slave2:/root/
+		另外两台机器分别source一下
+		
+		source /root/.bash_profile
+	7》修改其他两台机器上data目录下myid的唯一标识
+	
+	8》三台机器分别启动：
+		启动：zkServer.sh start
+		停止：zkServer.sh stop 
+		状态：zkServer.sh status 
+			（1个leader、2个follower）
+		jps查看进程：QuorumPeerMain
+	
+	9》简单测试下zookeeper存储数据功能：
+		zkCli.sh -server master:2181
+		
+		create /xxx 数据
+		get /xxx
+
+2、HBase分布式搭建
+	1》解压hbase到指定目录改名
+		tar -zxvf hbase-2.2.3-bin.tar.gz -C /usr/local/src/
+		cd /usr/local/src/
+		mv hbase-2.2.3/ hbase
+	2》配置hbase环境变量
+		vi /root/.bash_profile
+			export HBASE_HOME=/usr/local/src/hbase
+			export PATH=$PATH:$HBASE_HOME/bin
+		source /root/.bash_profile
+	3》hbase配置文件
+		1> hbase-env.sh
+			export JAVA_HOME=/usr/local/src/jdk
+			export HBASE_MANAGES_ZK=false
+		2> hbase-site.xml
+			<property>
+				<name>hbase.rootdir</name>
+				<value>hdfs://master:9000/hbase</value>
+			</property>
+			<property>
+				<name>hbase.cluster.distributed</name>
+				<value>true</value>
+			</property>
+			<property>
+				<name>hbase.zookeeper.quorum</name>
+				<value>master,slave1,slave2</value>
+			</property>
+			<property>
+				<name>hbase.unsafe.stream.capability.enforce</name>
+				<value>false</value>
+			</property>
+			<property>
+				<name>hbase.zookeeper.property.dataDir</name>
+				<value>/usr/local/src/zookeeper/data</value>
+			</property>
+		3> regionservers
+			master
+			slave1
+			slave2
+	4》 将hbase拷贝至其他机器：
+		scp -r /usr/local/src/hbase slave1:/usr/local/src/
+		scp -r /usr/local/src/hbase slave2:/usr/local/src/
+			
+	5》启动hbase集群（启动之前hadoop、zookeeper都要启动）
+		启动：start-hbase.sh
+		停止：stop-hbase.sh
+	6》进入hbase命令行：hbase shell
+		输入  list_namespace 可以查看所有的命名空间
+	7》打开hbase网页管理界面:
+		http://192.168.xx.xxx:16010
+
+3、hbase命令
+   1）创建命名空间  create_namespace "名字"
+   2）查看命名空间  list_namespace
+   3）建表： create "命名空间:表名","列族1","列族2",....
+   4）存入数据（一次只能存储一个Cell）：
+		put "命名空间:表名","rowkey值","列族:列名","值"
+		put "bigdata:tb_product","1","info:name","加多宝"
+   5）删除：
+		删一行：delete "bigdata:tb_product","1"
+		删一列：delete "bigdata:tb_product","1","info:name"
+   6）获取数据：
+		获取一行：get "bigdata:tb_product","1"
+		获取一行单列：get "bigdata:tb_product","1",{COLUMN=>"info:name"}
+		获取一行多列：get "bigdata:tb_product","1",{COLUMNS=>["info:name","info:price"]}
+	
+		获取全表：scan "bigdata:tb_product"
+		获取全表单列：scan "bigdata:tb_product",{COLUMN=>"info:name"}
+		获取全表多列：scan "bigdata:tb_product",{COLUMNS=>["info:name","info:price"]}
+		
+		扫描rowkey范围：scan "bigdata:tb_product",{STARTROW=>"1",STOPROW=>"5"}
+		格式化显示(中文乱码)：scan "bigdata:tb_product",{FORMATTER=>"toString"}
+		扫描限制行scan "bigdata:tb_product",{LIMIT=>5}
+		
+4、使用JavaAPI读写HBase
+	1）pom.xml中添加依赖：
+		<dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>3.1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>2.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-common</artifactId>
+            <version>2.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.47</version>
+        </dependency>
+	2）常见Java类，main方法中完成hbase的读写操作：
+		
+		//连接hbase
+        Configuration HBASE_CONFIG = new Configuration();
+        HBASE_CONFIG.set("hbase.zookeeper.quorum","192.168.44.61,192.168.44.62,192.168.44.63");  //hbase 服务地址
+        HBASE_CONFIG.set("hbase.zookeeper.property.clientPort","2181"); //端口号
+        HBaseConfiguration config = new HBaseConfiguration(HBASE_CONFIG);  //读取配置文件
+        Connection connection = ConnectionFactory.createConnection(config); //创建一个和hbase的链接对象
+		
+		//获取表对象
+		Table table = connection.getTable(TableName.valueOf("bigdata:tb_product"));//获取表对象
+		//添加数据：
+        Put put = new Put(Bytes.toBytes("3"));
+        put.addColumn(Bytes.toBytes("info"),Bytes.toBytes("name"),Bytes.toBytes("加多宝"));
+        put.addColumn(Bytes.toBytes("info"),Bytes.toBytes("price"),Bytes.toBytes(4.5));
+        table.put(put);
+		
+		//读取一行数据
+        Get get = new Get(Bytes.toBytes("3"));
+        Result result = table.get(get);
+        String name = Bytes.toString(result.getValue(Bytes.toBytes("info"),Bytes.toBytes("name")));
+        System.out.println(name);
+		
+		//扫描全表
+        Scan scan = new Scan();//默认全表
+        ResultScanner resultScanner = table.getScanner(scan);
+        for(Result result:resultScanner){
+            String name = Bytes.toString(result.getValue(Bytes.toBytes("info"),Bytes.toBytes("name")));
+            System.out.println(name);
+        }
+		
+		table.close()
+		connection.close()
+		//删除一行
+		
+		
