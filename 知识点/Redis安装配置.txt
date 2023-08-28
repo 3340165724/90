@@ -1,0 +1,85 @@
+比赛时阶段四注意事项，阶段四的zookeeper、kafka、redis都是单机版，且设置为自启动（如果无法使用可以查看进程是否有对应组件进程，没有则自己启动，一般会给出启动命令，如果没有可以考虑下面的启动方式）
+
+1、单机版kafka配置时，server.properties配置内容（比赛已安装好，自己练习时使用）：
+1）broker.id不用管，0就行
+2）host.name=ip
+3）listeners=PLAINTEXT://192.168.44.51:9092
+4）zookeeper.connect=localhost:2181
+
+
+2、启动kafka中内置的zookeeper（如果比赛给了启动命令按比赛的即可）
+/usr/local/src/kafka/bin/zookeeper-server-start.sh /usr/local/src/kafka/config/zookeeper.properties
+
+3、启动kafka：
+kafka-server-start.sh -daemon /usr/local/src/kafka/config/server.properties
+
+
+创建主题：
+kafka-topics.sh --create --zookeeper master:2181 --replication-factor 1 --partitions 1 --topic test1
+
+查看主题：
+kafka-topics.sh --zookeeper localhost:2181 --list
+
+4、阶段四的Redis安装在/usr/redis下：
+
+单机版redis安装：
+1）命令行输入：gcc -v   （检查是否安装了编译redis的c++环境，如果没有则安装）
+2）安装gcc：  yum install -y gcc
+3）将redis安装包上传至指定目录
+4）解压redis：tar -zxvf redis-4.0.1.tar.gz -C /usr/local/src
+5）进入redis目录下：  cd /usr/local/src/redis-4.0.1/
+6）输入：make  进行编译
+7）指定安装目录并进行安装：make install PREFIX=/usr/redis
+8）启动redis服务端：
+     /usr/redis/bin/redis-server /usr/redis/bin/redis.conf
+     如果需要修改redis配置文件，则：
+     cp /usr/local/src/redis-4.0.1/redis.conf /usr/redis/bin/
+     cd /usr/redis/bin/
+     vim redis.conf
+
+      如设置允许远程链接：bind 127.0.0.1 ::1  将前面的127.0.0.1改为 0.0.0.0
+      如修改端口号：6379修改
+      如果想关闭保护模式：protected-mode yes 设置为 no
+
+      查看进程命令：ps -ef |grep redis
+
+
+9）
+启动客户端：
+/usr/redis/bin/redis-cli
+
+
+Redis开机自启（了解即可）：
+8.1）如果想设置开机自启动则：
+cd /lib/systemd/system/
+vim redis.service
+[Unit]
+Description=redis-server
+After=network.target
+
+[Service]
+Type=forking
+# ExecStart需要按照实际情况修改成自己的地址
+ExecStart=/usr/redis/bin/redis-server /usr/redis/bin/redis.conf
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
+# 开机自动启动
+systemctl enable redis.service
+# 启动redis服务
+systemctl start redis.service
+# 查看服务状态
+systemctl status redis.service
+# 停止服务
+systemctl stop redis.service
+# 取消开机自动启动(卸载服务)
+systemctl disabled redis.service
+
+
+
+
+
+
+
